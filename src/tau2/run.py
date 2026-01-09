@@ -7,6 +7,7 @@ from typing import Optional
 
 from loguru import logger
 
+from tau2.agent.goose_agent import GooseAgent
 from tau2.agent.llm_agent import LLMAgent, LLMGTAgent, LLMSoloAgent
 from tau2.data_model.simulation import (
     AgentInfo,
@@ -451,7 +452,12 @@ def run_task(
     AgentConstructor = registry.get_agent_constructor(agent)
 
     solo_mode = False
-    if issubclass(AgentConstructor, LLMAgent):
+    if issubclass(AgentConstructor, GooseAgent):
+        agent = AgentConstructor(
+            tools=environment.get_tools(),
+            domain_policy=environment.get_policy(),
+        )
+    elif issubclass(AgentConstructor, LLMAgent):
         agent = AgentConstructor(
             tools=environment.get_tools(),
             domain_policy=environment.get_policy(),
@@ -484,7 +490,7 @@ def run_task(
         )
     else:
         raise ValueError(
-            f"Unknown agent type: {AgentConstructor}. Should be LLMAgent or LLMSoloAgent"
+            f"Unknown agent type: {AgentConstructor}. Should be LLMAgent, LLMSoloAgent, GooseAgent, or GymAgent"
         )
     try:
         user_tools = environment.get_user_tools()
